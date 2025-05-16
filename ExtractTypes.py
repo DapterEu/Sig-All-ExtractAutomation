@@ -130,12 +130,14 @@ class ExtractTypes:
         Keyword parameters with default values assigned to None are mandatory when creating a new extract
         while those assigned as an empty string are not mandatory
 
+        The reason for this is when creating the new extrat_type dataframe, empty string parameters (optional) won't throw an error
+        while parameters which are None type (mandatory) will.
+        This is good for us in case a user forgets to assign a mandatory parameter, the DF won't be created and a error will be thrown
+
+
         With this logic, an extract type MUST have a layout_id, delimiter etc. while it's not neccesary for a user to
         define an example, observation etc.
-
         """
-
-        extract_type_uid = self.__generate_salted_uuid()
 
         """
         Get a dictionary of ALL the parameters, excluding the self parameter
@@ -145,14 +147,16 @@ class ExtractTypes:
         params.pop("self")
 
         """
-        Validate the mandatory parameters 
+        Validate the input parameters 
         This method will throw an error if any parameters are not valid
         """
         self.__validateForAdd(**params)
 
         """
         After validation,
-        Generate a random uuid using uuid4 + a timestamp with 6 decimal points
+        Create the new extract_type id
+
+        Generate it using a random uuid using uuid4 + a timestamp with 6 decimal points
         and add it to the params dictionary that will be used to create the extract type dataframe 
         """
         extract_type_uid = self.__generate_salted_uuid()
@@ -160,7 +164,7 @@ class ExtractTypes:
         extract_type_df = spark.createDataFrame([params])
 
         """
-        Perform a check to see if the same exact extract type has already been created
+        After creating the new extract_type dataframe perform a check to see if the same exact extract type has already been created
         """
         self.__extractTypeAlreadyExists(extract_type_df)
 
@@ -192,10 +196,12 @@ class ExtractTypes:
         This method will return a dataframe with all extract types found with the given input parameters
 
         For this method, no parameters are mandatory, extract types can be filtered by 0 or more criteria
+        All the arguments given by the user will be used to filter through the existing extract types and return
+        a dataframe containing all matching extract types
         """
 
         """
-        Extract all the parameters that are not None => parameters that have been set as filtering criteria by the user
+        Extract all the parameters that are not None => parameters that have been given as filtering criteria by the user
         """
         params = locals()
         params.pop('self')
@@ -206,8 +212,9 @@ class ExtractTypes:
         self.__validateForGet(**non_empty_params)
 
         """
-        Read extract types using the FolderReaderManager class 
-        Dynamically filter the dataframe using the non_empty_params dictionary
+        Read all existing extract types using the FolderReaderManager class into a dataframe
+
+        Dynamically filter this dataframe using the non_empty_params given by the user
         """
         extract_types = FolderReaderManager().read(spark=spark, file_path=self.__extractTypesS3Path)
 
@@ -335,3 +342,22 @@ class ExtractTypes:
         """
         if match.count() > 0:
             raise ValueError("This extract already exists!")
+
+
+"""
+Example:
+
+-RECORD 0-------------------------------------------------------------------
+ archive_type      | gz                                                     
+ delimiter         | tab sep                                                
+ example           | SIG_Consumer_Auto_22.11_121322_0                       
+ extension         | psv                                                    
+ extract_type_uid  | e21be9d7-9336-4310-962e-fc70328dc7cf_1747406896.954929 
+ fully_qualified   |                                                        
+ internal_name     |                                                        
+ layout_id         | 3                                                      
+ naming_convention |                                                        
+ observation       | test observation                                       
+ split_by_size     | 4GB                                                    
+ storage_files     | no
+"""
