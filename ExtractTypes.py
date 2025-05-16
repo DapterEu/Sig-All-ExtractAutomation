@@ -3,7 +3,6 @@ Enums that define the posibile criteria for creating an extract type
 Things like delimiter, split by size, have clearly defined values that they are allowed to have
 """
 
-
 class DelimiterEnum(Enum):
     VERTICAL_BAR = "vertical bar sep"
     TAB = "tab sep"
@@ -45,8 +44,6 @@ class ExtensionEnum(Enum):
 """
     This enum contains the paths to helper configuration scripts that are used in the class
 """
-
-
 class ConfigurationEnum(Enum):
     PRODUCT_BASE = "extract-types"
     ERROR_HANDLING = "s3://bigdbm-scripts/common/errorhandling-manager.py"
